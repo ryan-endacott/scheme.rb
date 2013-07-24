@@ -1,8 +1,10 @@
-built_in_functions = {}
+
 
 class Environment < Hash
     
-    def initialize(parent = built_in_functions)
+    @@built_in_functions = {}
+    
+    def initialize(parent = @@built_in_functions)
         @parent = parent
     end
     
@@ -14,6 +16,10 @@ class Environment < Hash
         else
             @parent[key]            
         end
+    end
+    
+    def new_child
+        Environment.new(self)
     end
     
 end
