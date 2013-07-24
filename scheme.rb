@@ -1,6 +1,8 @@
+built_in_functions = {}
+
 class Environment < Hash
     
-    def initialize(parent = )
+    def initialize(parent = built_in_functions)
         @parent = parent
     end
     
