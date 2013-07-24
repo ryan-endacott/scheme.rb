@@ -1,3 +1,23 @@
+class Atom
+    
+    def initialize(type, value)
+        @type = type
+        @value = value
+    end
+    
+    def symbol?
+        @type == :symbol
+    end
+    
+    def int?
+        @type == :int
+    end
+    
+    def float?
+        @type == :float
+    end
+    
+end
 
 
 class Environment < Hash
@@ -60,15 +80,25 @@ end
 def atom(token)
     case token
     when /\A[+-]?\d+$\Z/
-      { :type => :int, :value => token.to_i }
+        Atom.new(:int, token.to_i)
     when /\A[+-]?\d+\.\d+\Z/
-      { :type => :float, :value => token.to_f }
+        Atom.new(:float, token.to_f)
     when /\A\S*\Z/
-      { :type => :symbol, :value => token }
+        Atom.new(:symbol, token)
     else
       raise SyntaxError, "Invalid syntax near #{token}"
     end
 end
 
-def interpret(input)
+global_env = Environment.new
+
+def interpret(input, env = global_env)
+    if input.is_a? Array
+        if input.first.symbol?
+            env[input]
+        
+end
+
+def lisp(input)
+    interpret(parse(input))
 end
