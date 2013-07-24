@@ -1,6 +1,6 @@
 
-def read(input)
-    parse(tokenize(input))
+def parse(input)
+    read(tokenize(input))
 end
 
 def tokenize(input)
@@ -10,7 +10,7 @@ def tokenize(input)
     split
 end
 
-def parse(tokens)
+def read(tokens)
     
     if tokens.size == 0
         raise SyntaxError, 'Unexpected EOF'
@@ -19,7 +19,7 @@ def parse(tokens)
     token = tokens.shift
     if token == '('
         li = []
-        li.push(parse(tokens)) while tokens.first != ')'
+        li.push(read(tokens)) while tokens.first != ')'
         tokens.shift # remove ')'
         return li
     elsif token == ')'
