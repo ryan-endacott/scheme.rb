@@ -1,3 +1,23 @@
+class Environment < Hash
+    
+    def initialize(parent = )
+        @parent = parent
+    end
+    
+    def [](key)
+        if key? key
+            super
+        elsif @parent[key].nil?
+            raise UndefinedError, "Variable #{key} is undefined."
+        else
+            @parent[key]            
+        end
+    end
+    
+end
+
+class UndefinedError < StandardError; end
+
 
 def parse(input)
     read(tokenize(input))
@@ -40,4 +60,7 @@ def atom(token)
     else
       raise SyntaxError, "Invalid syntax near #{token}"
     end
+end
+
+def interpret(input)
 end
