@@ -10,7 +10,13 @@ class Env < Hash
                         alt
                     end
                 end
-            end,   
+            end,
+        :+ =>
+            lambda do |env|
+                lambda do |*args|
+                    args.inject(&:+)
+                end
+            end     
     }
     
     def initialize(global = true, parent = @@built_in_functions)
