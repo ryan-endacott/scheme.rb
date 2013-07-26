@@ -33,26 +33,32 @@ class UndefinedError < StandardError; end
 
 
 def parse(input)
-    read(tokenize(input))
+    tokens = tokenize(input)
+    if tokens.size > 0
+        read(tokens)
+    else
+        nil
+    end
 end
 
 def tokenize(input)
     input.gsub(/\(/, ' ( ').
     gsub(/\)/, ' ) ').
+    gsub(/;[^\n]*/, ''). # Allow comments
     strip.
     split
 end
 
-def read(tokens)
+def read(tokens, depth = 0)
     
-    if tokens.size == 0
+    if tokens.size == 0 and depth > 0
         raise SyntaxError, 'Unexpected EOF'
     end
     
     token = tokens.shift
     if token == '('
         li = []
-        li.push(read(tokens)) while tokens.first != ')'
+        li.push(read(tokens, depth + 1)) while tokens.first != ')'
         tokens.shift # remove ')'
         return li
     elsif token == ')'
@@ -64,13 +70,15 @@ end
 
 def atom(token)
     case token
-    when /\A[+-]?\d+$\Z/
+    when /\A[+-]?\d+$\Z/ # integer
         token.to_i
-    when /\A[+-]?\d+\.\d+\Z/
+    when /\A[+-]?\d+\.\d+\Z/ # float
         token.to_f
-    when /\Anull\Z/
+    when /\Anull\Z/ # null
         nil
-    when /\A\S*\Z/
+    when /\A'\S*\Z/ # lisp symbol ex: 'hi
+        token.to_s[1..-1]
+    when /\A\S*\Z/ # symbol
         token.to_sym
     else
       raise SyntaxError, "Invalid syntax near #{token}"
@@ -80,9 +88,10 @@ end
 $global_env = Env.new
 
 def interpret(input, env = $global_env)
-    if input.is_a? Symbol # Variable
+    case input
+    when Symbol # Variable
         env[input]
-    elsif input.is_a? Array # Function call
+    when Array # Function call
         interpret_func(input, env)
     else # constant literals like numbers
         input
@@ -91,7 +100,7 @@ end
 
 def interpret_func(input, env)
     func = input.first
-    args = input[1, input.length]
+    args = input[1..-1]
     case func
     when :define
         if args.first.is_a? Symbol # Naming variable
@@ -131,11 +140,12 @@ def repl
     print 'scheme.rb >>'
     loop do
         input = gets
-        if input == 'quit'
+        if input.chomp == 'quit'
             puts 'Quitting scheme.rb!'
             return
         end
-        puts lisp(input)
+        output = lisp(input)
+        puts "=> #{output}"
         print 'scheme.rb >>'
     end
 end
