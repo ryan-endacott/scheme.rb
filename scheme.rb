@@ -1,45 +1,37 @@
-class Atom
+class Env < Hash
     
-    def initialize(type, value)
-        @type = type
-        @value = value
-    end
+    @@built_in_functions = {
+        :if =>
+            lambda do |env|
+                return lambda do |cond, conseq, alt|
+                    if cond
+                        conseq
+                    else
+                        alt
+                    end
+                end
+            end,   
+    }
     
-    def symbol?
-        @type == :symbol
-    end
-    
-    def int?
-        @type == :int
-    end
-    
-    def float?
-        @type == :float
-    end
-    
-end
-
-
-class Environment < Hash
-    
-    @@built_in_functions = {}
-    
-    def initialize(parent = @@built_in_functions)
+    def initialize(global = true, parent = @@built_in_functions)
+        @global = global
         @parent = parent
     end
     
-    def [](key)
+    def [](key, child_env = self)
         if key? key
-            super
+            super(key)
         elsif @parent[key].nil?
             raise UndefinedError, "Variable #{key} is undefined."
+        elsif @global
+            @parent[key].call(child_env)
         else
-            @parent[key]            
+            @parent[key, child_env]
         end
     end
     
     def new_child
-        Environment.new(self)
+        Env.new(false, self)
     end
     
 end
@@ -80,23 +72,33 @@ end
 def atom(token)
     case token
     when /\A[+-]?\d+$\Z/
-        Atom.new(:int, token.to_i)
+        token.to_i
     when /\A[+-]?\d+\.\d+\Z/
-        Atom.new(:float, token.to_f)
+        token.to_f
+    when /\Anull\Z/
+        nil
     when /\A\S*\Z/
-        Atom.new(:symbol, token)
+        token.to_sym
     else
       raise SyntaxError, "Invalid syntax near #{token}"
     end
 end
 
-global_env = Environment.new
+$global_env = Env.new
 
-def interpret(input, env = global_env)
-    if input.is_a? Array
-        if input.first.symbol?
-            env[input]
-        
+def interpret(input, env = $global_env)
+    if input.is_a? Symbol
+        env[input]
+    elsif input.is_a? Array # Builtin function
+        if input.first == :define # Special case for define
+            env[input[1]] = interpret(input[2], env.new_child)
+        else
+            args = input[1, input.length].map { |i| interpret(i, env.new_child) }
+            env[input.first].call(*args)
+        end
+    else # constant literals, e.g. numbers
+        input
+    end
 end
 
 def lisp(input)
