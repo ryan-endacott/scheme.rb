@@ -1,27 +1,15 @@
 class Env < Hash
     
     @@built_in_functions = {
-        :if =>
-            lambda do |env|
-                return lambda do |cond, conseq, alt|
-                    if cond
-                        conseq
-                    else
-                        alt
-                    end
-                end
-            end,
         :+ =>
-            lambda do |env|
-                lambda do |*args|
-                    args.inject(&:+)
-                end
+            lambda do |*args|
+                args.inject(&:+)
             end     
     }
     
-    def initialize(global = true, parent = @@built_in_functions)
-        @global = global
+    def initialize(parent = @@built_in_functions, params = nil)
         @parent = parent
+        merge!(Hash[params]) if params
     end
     
     def [](key, child_env = self)
@@ -29,15 +17,13 @@ class Env < Hash
             super(key)
         elsif @parent[key].nil?
             raise UndefinedError, "Variable #{key} is undefined."
-        elsif @global
-            @parent[key].call(child_env)
         else
-            @parent[key, child_env]
+            @parent[key]
         end
     end
     
-    def new_child
-        Env.new(false, self)
+    def new_child(params = nil)
+        Env.new(self, params)
     end
     
 end
@@ -93,17 +79,38 @@ end
 $global_env = Env.new
 
 def interpret(input, env = $global_env)
-    if input.is_a? Symbol
+    if input.is_a? Symbol # Variable
         env[input]
-    elsif input.is_a? Array # Builtin function
-        if input.first == :define # Special case for define
-            env[input[1]] = interpret(input[2], env.new_child)
-        else
-            args = input[1, input.length].map { |i| interpret(i, env.new_child) }
-            env[input.first].call(*args)
-        end
-    else # constant literals, e.g. numbers
+    elsif input.is_a? Array # Function call
+        interpret_func(input, env)
+    else # constant literals like numbers
         input
+    end
+end
+
+def interpret_func(input, env)
+    func = input.first
+    args = input[1, input.length]
+    case func
+    when :define
+        name, expr = args
+        env[name] = interpret(expr, env.new_child)
+    when :if
+        cond, conseq, alt = args
+        if cond
+            interpret(conseq, env)
+        else
+            interpret(alt, env)
+        end
+    when :lambda
+        params, expr = args
+        lambda do |*args|
+            interpret(expr, env.new_child(params.zip args)) # Interpet with params in environment
+        end
+    else # Any other function
+        # Interpret args first for applicative-order evaluation
+        args = args.map { |a| interpret(a, env.new_child) }
+        env[func].call(*args)
     end
 end
 
