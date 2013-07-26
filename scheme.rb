@@ -7,9 +7,8 @@ class Env < Hash
             end     
     }
     
-    def initialize(parent = @@built_in_functions, params = nil)
+    def initialize(parent = @@built_in_functions)
         @parent = parent
-        merge!(Hash[params]) if params
     end
     
     def [](key, child_env = self)
@@ -23,7 +22,9 @@ class Env < Hash
     end
     
     def new_child(params = nil)
-        Env.new(self, params)
+        env = Env.new(self)
+        env.merge!(Hash[params]) if params
+        env
     end
     
 end
@@ -93,8 +94,15 @@ def interpret_func(input, env)
     args = input[1, input.length]
     case func
     when :define
-        name, expr = args
-        env[name] = interpret(expr, env.new_child)
+        if args.first.is_a? Symbol # Naming variable
+            name, expr = args
+            env[name] = interpret(expr, env.new_child)
+        else # Creating function
+            params, expr = args
+            env[params.shift] = lambda do |*args|
+                interpret(expr, env.new_child(params.zip args))
+            end
+        end
     when :if
         cond, conseq, alt = args
         if cond
