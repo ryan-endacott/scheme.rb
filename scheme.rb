@@ -125,3 +125,17 @@ end
 def lisp(input)
     interpret(parse(input))
 end
+
+def repl
+    puts 'Welcome to scheme.rb!'
+    print 'scheme.rb >>'
+    loop do
+        input = gets
+        if input == 'quit'
+            puts 'Quitting scheme.rb!'
+            return
+        end
+        puts lisp(input)
+        print 'scheme.rb >>'
+    end
+end
