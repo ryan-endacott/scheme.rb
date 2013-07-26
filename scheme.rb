@@ -124,6 +124,10 @@ def interpret_func(input, env)
         lambda do |*args|
             interpret(expr, env.new_child(params.zip args)) # Interpet with params in environment
         end
+    when :begin
+        args.each do |arg|
+            interpret(arg, env.new_child)
+        end
     else # Any other function
         # Interpret args first for applicative-order evaluation
         args = args.map { |a| interpret(a, env.new_child) }
