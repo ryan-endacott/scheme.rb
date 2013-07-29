@@ -4,7 +4,11 @@ class Env < Hash
         :+ =>
             lambda do |*args|
                 args.inject(&:+)
-            end     
+            end,
+        :eq? =>
+            lambda do |*args|
+                args.uniq.size == 1
+            end
     }
     
     def initialize(parent = @@built_in_functions)
