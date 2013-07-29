@@ -122,10 +122,18 @@ def interpret_func(input, env)
         end
     when :if
         cond, conseq, alt = args
-        if cond
+        if interpret(cond, env)
             interpret(conseq, env)
         else
             interpret(alt, env)
+        end
+    when :cond
+        args.each do |cond, expr|
+            if cond == :else
+                return interpret(expr, env)
+            elsif interpret(cond, env)
+                return interpret(expr, env)
+            end
         end
     when :lambda
         params, expr = args
