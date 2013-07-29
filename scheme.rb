@@ -76,7 +76,7 @@ def atom(token)
         token.to_f
     when /\Anull\Z/ # null
         nil
-    when /\A'\S*\Z/ # lisp symbol ex: 'hi
+    when /\A:\S*\Z/ # lisp symbol ex: 'hi
         token.to_s[1..-1]
     when /\A\S*\Z/ # symbol
         token.to_sym
