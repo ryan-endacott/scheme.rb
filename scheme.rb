@@ -8,6 +8,10 @@ class Env < Hash
         :eq? =>
             lambda do |*args|
                 args.uniq.size == 1
+            end,
+        :display =>
+            lambda do |*args|
+                puts args
             end
     }
     
@@ -130,7 +134,7 @@ def interpret_func(input, env)
         end
     when :begin
         args.each do |arg|
-            interpret(arg, env.new_child)
+            interpret(arg, env)
         end
     else # Any other function
         # Interpret args first for applicative-order evaluation
