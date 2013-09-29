@@ -1,5 +1,5 @@
 class Env < Hash
-    
+
     @@built_in_functions = {
         :+ =>
             lambda do |*args|
@@ -12,13 +12,17 @@ class Env < Hash
         :display =>
             lambda do |*args|
                 puts args
+            end,
+        :* =>
+            lambda do |*args|
+              args.inject(&:*)
             end
     }
-    
+
     def initialize(parent = @@built_in_functions)
         @parent = parent
     end
-    
+
     def [](key, child_env = self)
         if key? key
             super(key)
@@ -28,13 +32,13 @@ class Env < Hash
             @parent[key]
         end
     end
-    
+
     def new_child(params = nil)
         env = Env.new(self)
         env.merge!(Hash[params]) if params
         env
     end
-    
+
 end
 
 class UndefinedError < StandardError; end
@@ -58,11 +62,11 @@ def tokenize(input)
 end
 
 def read(tokens, depth = 0)
-    
+
     if tokens.size == 0 and depth > 0
         raise SyntaxError, 'Unexpected EOF'
     end
-    
+
     token = tokens.shift
     if token == '('
         li = []
